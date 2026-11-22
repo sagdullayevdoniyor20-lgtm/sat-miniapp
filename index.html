@@ -110,6 +110,28 @@
   .theme-btn { flex: none; border: 0; background: var(--card); color: var(--text); border-radius: 12px;
     padding: 8px 12px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-top: 4px; }
   body { transition: background-color .2s, color .2s; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .chip { background: var(--card); border-radius: 20px; padding: 4px 12px; font-size: 14px; font-weight: 600; }
+  .chip.fire { color: #f97316; }
+  .tools { display: flex; gap: 8px; align-items: center; }
+  .tool { border: 0; background: var(--card); color: var(--text); border-radius: 8px; padding: 4px 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .optrow { display: flex; gap: 8px; align-items: stretch; margin: 8px 0; }
+  .optrow .opt { margin: 0; flex: 1; }
+  .xbtn { flex: none; width: 46px; border: 2px solid var(--border); background: var(--card); color: var(--hint); border-radius: 12px;
+    font-weight: 700; font-size: 15px; cursor: pointer; text-decoration: line-through; }
+  .xbtn.on { background: var(--hint); color: var(--card); border-color: var(--hint); }
+  .opt.crossed { opacity: .45; }
+  .opt.crossed .v, .opt.crossed .l { text-decoration: line-through; }
+  .overlay { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; flex-direction: column; }
+  .overlay .bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); font-weight: 600; }
+  .overlay .bar button { border: 0; background: var(--bg2); color: var(--text); border-radius: 8px; padding: 6px 12px; font-size: 15px; cursor: pointer; }
+  .overlay iframe { flex: 1; border: 0; width: 100%; background: #fff; }
+  .overlay .body { flex: 1; overflow: auto; padding: 14px; text-align: center; }
+  .overlay .body img { max-width: 100%; max-height: 62vh; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,.25); }
+  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: rgba(20,20,20,.9); color: #fff;
+    padding: 10px 16px; border-radius: 10px; font-size: 14px; z-index: 60; max-width: 90%; text-align: center; }
+  .est { font-size: 15px; margin-top: 6px; }
+  .est b { font-size: 22px; }
 </style>
 </head>
 <body>
@@ -188,7 +210,12 @@
     TG.ready();
     TG.expand();
     TG.onEvent && TG.onEvent('themeChanged', () => { if (mavzu === 'avto') mavzuniQoy(); });
-    TG.BackButton.onClick(() => { if (backHandler) backHandler(); });
+    TG.BackButton.onClick(() => {
+      // avval oçiq oyna (kalkulyator, natija kartasi) yopiladi
+      const ov = [...document.querySelectorAll('.overlay')].filter(o => o.style.display !== 'none').pop();
+      if (ov) { if (ov === calcEl) ov.style.display = 'none'; else ov.remove(); return; }
+      if (backHandler) backHandler();
+    });
   }
   mavzuniQoy();
 
@@ -277,7 +304,9 @@
     const bajarildi = d.filter(x => x.natija).length;
 
     let h = '<div class="head"><div><h1>SAT Math</h1>' + '<div class="hint">Salom' + (holat.ism ? ', ' + esc(holat.ism) : '') +
-      '! Bugun — ' + holat.kun + '-kuningiz · bajarildi: ' + bajarildi + ' / ' + d.length + '</div></div>' +
+      '! Bugun — ' + holat.kun + '-kuningiz</div>' +
+      '<div class="chips"><span class="chip">✅ ' + bajarildi + ' / ' + d.length + '</span>' +
+      (holat.streak > 0 ? '<span class="chip fire">🔥 ' + holat.streak + ' kun ketma-ket</span>' : '') + '</div></div>' +
       '<button class="theme-btn" id="themeBtn">' + MAVZU_NOM[mavzu] + '</button></div><div style="height:14px"></div>';
 
     if (bugungi) {
@@ -385,7 +414,7 @@
 
     const j = st.javoblar[s.id] || '';
     let h = '<div class="topbar"><span>' + (mock ? (st.modul + 1) + '-modul · ' : '') + (st.i + 1) + ' / ' + savollar.length + '</span>' +
-      '<span class="timer" id="timer"></span></div>' +
+      '<span class="tools"><button class="tool" id="calcBtn">🧮 Desmos</button><span class="timer" id="timer"></span></span></div>' +
       '<div class="card"><div class="q">' + fmt(s.matn) + '</div></div>';
     if (s.turi === 'yozish') {
       h += '<input class="ans" id="ans" inputmode="text" autocomplete="off" placeholder="Javobingiz" value="' + esc(j) + '">' +
@@ -393,7 +422,9 @@
     } else {
       ['A', 'B', 'C', 'D'].forEach(k => {
         if (s.variantlar && s.variantlar[k] !== undefined && s.variantlar[k] !== '') {
-          h += '<button class="opt' + (j === k ? ' sel' : '') + '" data-k="' + k + '"><span class="l">' + k + '</span><span class="v">' + fmt(s.variantlar[k]) + '</span></button>';
+          const x = chizilganmi(st, s.id, k);
+          h += '<div class="optrow"><button class="opt' + (j === k ? ' sel' : '') + (x ? ' crossed' : '') + '" data-k="' + k + '"><span class="l">' + k + '</span><span class="v">' + fmt(s.variantlar[k]) + '</span></button>' +
+            '<button class="xbtn' + (x ? ' on' : '') + '" data-x="' + k + '" aria-label="' + k + ' variantni çiziş">' + k + '</button></div>';
         }
       });
     }
@@ -408,17 +439,38 @@
     const saqla = () => store.setJSON(kalit(dars), st);
     const go = i => { st.i = i; saqla(); testEkran(dars, st); };
 
+    const variantlarniYangila = () => {
+      app.querySelectorAll('.opt').forEach(o => {
+        const k = o.getAttribute('data-k');
+        o.classList.toggle('sel', st.javoblar[s.id] === k);
+        o.classList.toggle('crossed', chizilganmi(st, s.id, k));
+      });
+      app.querySelectorAll('.xbtn').forEach(o => o.classList.toggle('on', chizilganmi(st, s.id, o.getAttribute('data-x'))));
+      const p = app.querySelector('.pal [data-go="' + st.i + '"]');
+      if (p) p.classList.toggle('done', !!st.javoblar[s.id]);
+    };
     app.querySelectorAll('.opt').forEach(b => {
       b.onclick = () => {
         const k = b.getAttribute('data-k');
-        if (st.javoblar[s.id] === k) delete st.javoblar[s.id]; else st.javoblar[s.id] = k;
+        if (st.javoblar[s.id] === k) delete st.javoblar[s.id];
+        else { st.javoblar[s.id] = k; chiz(st, s.id, k, false); } // çizilgan variant tanlansa, çiziq olib tashlanadi
         haptic();
         saqla();
-        app.querySelectorAll('.opt').forEach(o => o.classList.toggle('sel', st.javoblar[s.id] === o.getAttribute('data-k')));
-        const p = app.querySelector('.pal [data-go="' + st.i + '"]');
-        if (p) p.classList.toggle('done', !!st.javoblar[s.id]);
+        variantlarniYangila();
       };
     });
+    app.querySelectorAll('.xbtn').forEach(b => {
+      b.onclick = () => {
+        const k = b.getAttribute('data-x');
+        const endi = !chizilganmi(st, s.id, k);
+        chiz(st, s.id, k, endi);
+        if (endi && st.javoblar[s.id] === k) delete st.javoblar[s.id];
+        haptic();
+        saqla();
+        variantlarniYangila();
+      };
+    });
+    document.getElementById('calcBtn').onclick = kalkulyator;
     const inp = document.getElementById('ans');
     if (inp) {
       inp.oninput = () => {
@@ -485,6 +537,7 @@
       if (holat) {
         const x = holat.darslar.find(d => d.id === dars.id);
         if (x) x.natija = { togri: res.natija.togri, jami: res.natija.jami };
+        if (typeof res.streak === 'number') holat.streak = res.streak;
       }
       natijaSahifa(dars, res.natija);
     } catch (e) {
@@ -540,6 +593,7 @@
     let h = '<div class="card score"><div style="font-size:40px">' + emoji + '</div>' +
       '<div class="big">' + nat.togri + ' / ' + nat.jami + '</div>' +
       '<div class="hint">' + foiz + '% töğri' + (nat.vaqt ? ' · ' + vaqtStr(nat.vaqt) : '') + '</div>' +
+      (dars.turi === 'mock' ? '<div class="est">Taxminiy SAT Math ball: <b>' + taxminiyBall(nat.togri, nat.jami) + '</b> / 800</div>' : '') +
       '<h2 style="margin-top:12px">' + esc(dars.nomi_uz) + '</h2></div>';
 
     const bloklar = dars.turi === 'mock'
@@ -560,7 +614,12 @@
       });
       h += '</div>';
     });
-    show(h, '<button class="btn" id="home">Boş sahifa</button>');
+    if (dars.turi === 'mock') {
+      show(h, '<div class="btns"><button class="btn sec" id="home">Boş sahifa</button><button class="btn" id="card">📸 Natija kartasi</button></div>');
+      document.getElementById('card').onclick = () => kartaOyna(dars, nat);
+    } else {
+      show(h, '<button class="btn" id="home">Boş sahifa</button>');
+    }
     document.getElementById('home').onclick = () => home();
     app.querySelectorAll('[data-s]').forEach(el => {
       el.onclick = () => {
@@ -582,6 +641,119 @@
         box.style.display = '';
       };
     });
+  }
+
+  // ---------- VARIANTNI ÇIZIŞ ----------
+
+  function chizilganmi(st, sid, k) {
+    return !!(st.chiz && st.chiz[sid] && st.chiz[sid].indexOf(k) >= 0);
+  }
+  function chiz(st, sid, k, on) {
+    st.chiz = st.chiz || {};
+    const arr = (st.chiz[sid] || []).filter(x => x !== k);
+    if (on) arr.push(k);
+    if (arr.length) st.chiz[sid] = arr; else delete st.chiz[sid];
+  }
+
+  // ---------- DESMOS KALKULYATOR ----------
+
+  let calcEl = null;
+  function kalkulyator() {
+    if (!calcEl) {
+      calcEl = document.createElement('div');
+      calcEl.className = 'overlay';
+      calcEl.innerHTML = '<div class="bar"><span>🧮 Desmos kalkulyator</span><button id="calcClose">✕ Yopiş</button></div>' +
+        '<iframe src="https://www.desmos.com/calculator" allow="clipboard-write" title="Desmos"></iframe>';
+      document.body.appendChild(calcEl);
+      calcEl.querySelector('#calcClose').onclick = () => { calcEl.style.display = 'none'; };
+    }
+    calcEl.style.display = 'flex'; // yopilganda ham ičidagi hisob-kitoblar saqlanib qoladi
+  }
+
+  // ---------- TAXMINIY BALL VA NATIJA KARTASI ----------
+
+  // Taxminiy jadval: 44 savoldan nečtasi töğri → 200–800 ball (rasmiy SAT jadvali emas)
+  function taxminiyBall(togri, jami) {
+    const nuqtalar = [[0, 200], [5, 300], [10, 380], [15, 440], [20, 490], [25, 540], [30, 590], [35, 650], [40, 730], [44, 800]];
+    const x = jami ? togri * 44 / jami : 0;
+    for (let i = 1; i < nuqtalar.length; i++) {
+      const [x1, y1] = nuqtalar[i - 1], [x2, y2] = nuqtalar[i];
+      if (x <= x2) return Math.round((y1 + (y2 - y1) * (x - x1) / (x2 - x1)) / 10) * 10;
+    }
+    return 800;
+  }
+
+  function toast(matn) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = matn;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  function kartaChiz(dars, nat) {
+    const W = 1080, H = 1920;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const x = c.getContext('2d');
+    const g = x.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, '#0f2a5f'); g.addColorStop(0.55, '#1d5fd1'); g.addColorStop(1, '#38a3ff');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    // bezak doiralar
+    x.fillStyle = 'rgba(255,255,255,.06)';
+    x.beginPath(); x.arc(W - 80, 260, 320, 0, Math.PI * 2); x.fill();
+    x.beginPath(); x.arc(60, H - 220, 260, 0, Math.PI * 2); x.fill();
+
+    const font = (w, s) => w + ' ' + s + 'px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+    x.textAlign = 'center'; x.fillStyle = '#fff';
+    x.font = font('700', 64); x.fillText('SAT Math', W / 2, 260);
+    x.globalAlpha = .8; x.font = font('500', 44); x.fillText(dars.nomi_en || dars.nomi_uz || '', W / 2, 340); x.globalAlpha = 1;
+
+    // ball kartasi
+    const bx = 110, by = 520, bw = W - 220, bh = 760, r = 60;
+    x.fillStyle = 'rgba(255,255,255,.14)';
+    x.beginPath(); x.moveTo(bx + r, by); x.arcTo(bx + bw, by, bx + bw, by + bh, r); x.arcTo(bx + bw, by + bh, bx, by + bh, r);
+    x.arcTo(bx, by + bh, bx, by, r); x.arcTo(bx, by, bx + bw, by, r); x.closePath(); x.fill();
+    x.fillStyle = '#fff';
+    x.globalAlpha = .85; x.font = font('600', 46); x.fillText('Taxminiy SAT Math ball', W / 2, by + 130); x.globalAlpha = 1;
+    x.font = font('800', 300); x.fillText(String(taxminiyBall(nat.togri, nat.jami)), W / 2, by + 470);
+    x.globalAlpha = .85; x.font = font('600', 52); x.fillText(nat.togri + ' / ' + nat.jami + ' töğri javob', W / 2, by + 620); x.globalAlpha = 1;
+
+    let y = by + bh + 140;
+    if (holat && holat.streak > 0) { x.font = font('700', 54); x.fillText('🔥 ' + holat.streak + ' kun ketma-ket', W / 2, y); y += 100; }
+    if (holat && holat.ism) { x.globalAlpha = .9; x.font = font('600', 48); x.fillText(holat.ism, W / 2, y); x.globalAlpha = 1; }
+
+    x.font = font('600', 44); x.globalAlpha = .9;
+    x.fillText('Bepul SAT Math tayyorgarlik', W / 2, H - 230);
+    x.font = font('800', 60); x.globalAlpha = 1;
+    x.fillText(holat && holat.bot ? '@' + holat.bot : 'Telegram bot', W / 2, H - 150);
+    return c.toDataURL('image/jpeg', 0.86);
+  }
+
+  function kartaOyna(dars, nat) {
+    let rasm;
+    try { rasm = kartaChiz(dars, nat); } catch (e) { return toast('Rasm çizib bölmadi'); }
+    const el = document.createElement('div');
+    el.className = 'overlay';
+    el.innerHTML = '<div class="bar"><span>📸 Natija kartasi</span><button id="kClose">✕</button></div>' +
+      '<div class="body"><img src="' + rasm + '" alt="Natija kartasi"><p class="hint">Rasmni çatingizga yuboramiz — ' +
+      'u yerdan dostlaringizga ulaşing yoki storiesga qöying.</p></div>' +
+      '<div style="padding:10px 14px calc(10px + env(safe-area-inset-bottom))"><button class="btn" id="kSend">Telegram\'ga yuboriş</button></div>';
+    document.body.appendChild(el);
+    el.querySelector('#kClose').onclick = () => el.remove();
+    const btn = el.querySelector('#kSend');
+    btn.onclick = async () => {
+      btn.disabled = true; btn.textContent = 'Yuborilmoqda…';
+      try {
+        await api('karta', { id: dars.id, rasm: rasm });
+        haptic('success');
+        el.remove();
+        toast('✅ Rasm çatga yuborildi');
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'Telegram\'ga yuboriş';
+        toast(e.message === 'Failed to fetch' ? 'Internetni tekşiring' : e.message);
+      }
+    };
   }
 
   // ---------- ISHGA TUSHIRISH ----------
