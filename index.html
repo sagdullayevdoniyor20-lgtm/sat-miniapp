@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SAT Math</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --bg2: var(--tg-theme-secondary-bg-color, #f2f3f7);
+    --text: var(--tg-theme-text-color, #111827);
+    --hint: var(--tg-theme-hint-color, #8a8f98);
+    --link: var(--tg-theme-link-color, #2b7de9);
+    --btn: var(--tg-theme-button-color, #2b7de9);
+    --btn-text: var(--tg-theme-button-text-color, #ffffff);
+    --card: var(--tg-theme-section-bg-color, var(--bg));
+    --green: #22a861;
+    --green-bg: rgba(34, 168, 97, .12);
+    --red: #e5484d;
+    --red-bg: rgba(229, 72, 77, .12);
+    --border: rgba(127, 127, 127, .18);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg2); color: var(--text);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  #app { max-width: 640px; margin: 0 auto; padding: 14px 14px 110px; }
+  h1 { font-size: 22px; margin: 4px 0 2px; }
+  h2 { font-size: 18px; margin: 0 0 6px; }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--hint); margin: 22px 4px 8px; font-weight: 600; }
+  .hint { color: var(--hint); font-size: 14px; }
+  .card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; }
+  .today { background: var(--btn); color: var(--btn-text); }
+  .today .hint { color: var(--btn-text); opacity: .8; }
+  .today .btn { background: var(--btn-text); color: var(--btn); }
+  .list { background: var(--card); border-radius: var(--radius); overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .row:last-child { border-bottom: 0; }
+  .row.locked { cursor: default; opacity: .55; }
+  .row .ic { font-size: 22px; width: 28px; text-align: center; flex: none; }
+  .row .tx { flex: 1; min-width: 0; }
+  .row .tx b { display: block; font-weight: 600; font-size: 15px; }
+  .row .st { font-size: 13px; color: var(--hint); white-space: nowrap; }
+  .row .st.ok { color: var(--green); font-weight: 600; }
+  .btn { display: block; width: 100%; border: 0; border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 600;
+    background: var(--btn); color: var(--btn-text); cursor: pointer; text-align: center; }
+  .btn.sec { background: var(--bg2); color: var(--text); }
+  .btn:disabled { opacity: .5; }
+  .btns { display: flex; gap: 10px; }
+  .btns .btn { flex: 1; }
+  .bottom { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: var(--bg); border-top: 1px solid var(--border); }
+  .bottom > div { max-width: 640px; margin: 0 auto; }
+  .seg { display: flex; background: var(--bg2); border-radius: 10px; padding: 3px; margin: 12px 0; }
+  .seg button { flex: 1; border: 0; background: transparent; padding: 8px; border-radius: 8px; font-size: 14px; color: var(--text); cursor: pointer; }
+  .seg button.on { background: var(--card); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .theory { font-size: 16px; line-height: 1.65; }
+  .formula { background: var(--bg2); border-radius: 10px; padding: 10px 12px; margin: 6px 0; overflow-x: auto; }
+  .example { border-left: 3px solid var(--btn); padding: 4px 0 4px 12px; margin: 10px 0; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: 600; }
+  .timer { font-variant-numeric: tabular-nums; background: var(--card); padding: 4px 10px; border-radius: 8px; }
+  .timer.low { color: var(--red); }
+  .q { font-size: 17px; line-height: 1.6; overflow-x: auto; }
+  .opt { display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left; border: 2px solid var(--border);
+    background: var(--card); color: var(--text); border-radius: 12px; padding: 12px; margin: 8px 0; font-size: 16px; cursor: pointer; }
+  .opt .l { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .opt .v { flex: 1; min-width: 0; overflow-x: auto; padding-top: 2px; }
+  .opt.sel { border-color: var(--btn); }
+  .opt.sel .l { background: var(--btn); color: var(--btn-text); border-color: var(--btn); }
+  .opt.right { border-color: var(--green); background: var(--green-bg); }
+  .opt.wrong { border-color: var(--red); background: var(--red-bg); }
+  input.ans { width: 100%; font-size: 20px; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--border);
+    background: var(--card); color: var(--text); outline: none; margin-top: 10px; }
+  input.ans:focus { border-color: var(--btn); }
+  .pal { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 6px; margin-top: 14px; }
+  .pal button { border: 0; border-radius: 8px; padding: 8px 0; font-size: 14px; background: var(--card); color: var(--text); cursor: pointer; }
+  .pal button.done { background: var(--btn); color: var(--btn-text); opacity: .75; }
+  .pal button.cur { outline: 2px solid var(--btn); outline-offset: 1px; opacity: 1; }
+  .score { text-align: center; padding: 22px 16px; }
+  .score .big { font-size: 44px; font-weight: 800; line-height: 1.1; }
+  .res { display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .res:last-child { border-bottom: 0; }
+  .res .n { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-size: 14px; flex: none; }
+  .res .n.ok { background: var(--green-bg); color: var(--green); }
+  .res .n.no { background: var(--red-bg); color: var(--red); }
+  .detail { padding: 4px 14px 14px; border-bottom: 1px solid var(--border); }
+  .center { text-align: center; padding: 60px 20px; color: var(--hint); }
+  .spin { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--btn); border-radius: 50%;
+    animation: s 0.8s linear infinite; margin: 0 auto 14px; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--bg2); color: var(--hint); margin-bottom: 6px; }
+  .katex-display { overflow-x: auto; overflow-y: hidden; }
+</style>
+</head>
+<body>
+<div id="app"><div class="center"><div class="spin"></div>Yuklanmoqda…</div></div>
+<div class="bottom" id="bottom" style="display:none"><div id="bottomIn"></div></div>
+
+<script>
+(function () {
+  const TG = window.Telegram && window.Telegram.WebApp;
+  const params = new URLSearchParams(location.search);
+  const API = params.get('api') || '';
+  const initData = TG ? TG.initData : '';
+  const USER_ID = (TG && TG.initDataUnsafe && TG.initDataUnsafe.user && TG.initDataUnsafe.user.id) || 'x';
+  const DOLLAR = '';
+
+  const app = document.getElementById('app');
+  const bottom = document.getElementById('bottom');
+  const bottomIn = document.getElementById('bottomIn');
+
+  // localStorage ba'zan işlamaydi — unda xotirada saqlaymiz
+  const mem = {};
+  const store = {
+    get(k) { try { const v = localStorage.getItem(k); return v === null ? (mem[k] || null) : v; } catch (e) { return mem[k] || null; } },
+    set(k, v) { mem[k] = v; try { localStorage.setItem(k, v); } catch (e) {} },
+    getJSON(k) { try { return JSON.parse(store.get(k)); } catch (e) { return null; } },
+    setJSON(k, v) { store.set(k, JSON.stringify(v)); },
+    remove(k) { delete mem[k]; try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  let holat = null;      // darslar röyxati
+  let til = store.get('til') || 'uz';
+  let timerId = null;
+  let backHandler = null;
+
+  if (TG) {
+    TG.ready();
+    TG.expand();
+    try { TG.setHeaderColor('secondary_bg_color'); } catch (e) {}
+    TG.BackButton.onClick(() => { if (backHandler) backHandler(); });
+  }
+
+  // ---------- yordamçi funksiyalar ----------
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  // \$ — pul belgisi, $...$ — formula
+  function fmt(s) {
+    return esc(s).replace(/\\\$/g, DOLLAR).replace(/\n/g, '<br>');
+  }
+  function renderMath(el) {
+    if (window.renderMathInElement) {
+      try {
+        window.renderMathInElement(el, {
+          delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }],
+          throwOnError: false
+        });
+      } catch (e) {}
+    }
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (w.nextNode()) if (w.currentNode.nodeValue.indexOf(DOLLAR) >= 0) nodes.push(w.currentNode);
+    nodes.forEach(n => { n.nodeValue = n.nodeValue.split(DOLLAR).join('$'); });
+  }
+  function show(html, bottomHtml) {
+    stopTimer();
+    app.innerHTML = html;
+    if (bottomHtml) { bottomIn.innerHTML = bottomHtml; bottom.style.display = ''; }
+    else { bottomIn.innerHTML = ''; bottom.style.display = 'none'; }
+    renderMath(app);
+    renderMath(bottomIn);
+    window.scrollTo(0, 0);
+  }
+  function setBack(fn) {
+    backHandler = fn;
+    if (!TG) return;
+    if (fn) TG.BackButton.show(); else TG.BackButton.hide();
+  }
+  function haptic(t) {
+    try { TG && TG.HapticFeedback && (t ? TG.HapticFeedback.notificationOccurred(t) : TG.HapticFeedback.selectionChanged()); } catch (e) {}
+  }
+  function confirmBox(text) {
+    return new Promise(res => {
+      if (TG && TG.isVersionAtLeast && TG.isVersionAtLeast('6.2')) TG.showConfirm(text, ok => res(!!ok));
+      else res(window.confirm(text));
+    });
+  }
+  function vaqtStr(sek) {
+    sek = Math.max(0, Math.round(sek));
+    const m = Math.floor(sek / 60), s = sek % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+  function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+  function loading(t) { show('<div class="center"><div class="spin"></div>' + esc(t || 'Yuklanmoqda…') + '</div>'); }
+  function xato(msg, retry) {
+    show('<div class="center"><div style="font-size:40px">⚠️</div><p>' + esc(msg) + '</p>' +
+      (retry ? '<button class="btn" id="retry" style="max-width:240px;margin:0 auto">Qayta urinib köriş</button>' : '') + '</div>');
+    if (retry) document.getElementById('retry').onclick = retry;
+  }
+
+  async function api(action, data) {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ action: action, initData: initData }, data || {}))
+    });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.xato || 'Xatolik');
+    return j;
+  }
+
+  // ---------- BOSH SAHIFA ----------
+
+  async function home(fresh) {
+    setBack(null);
+    if (!holat || fresh) {
+      loading();
+      try { holat = await api('holat'); }
+      catch (e) { return xato(e.message === 'Failed to fetch' ? 'Internetni tekşiring' : e.message, () => home(true)); }
+    }
+    const d = holat.darslar;
+    const bugungi = d.find(x => x.ochiq && x.bor && !x.natija);
+    const bajarildi = d.filter(x => x.natija).length;
+
+    let h = '<h1>SAT Math</h1><div class="hint">Salom' + (holat.ism ? ', ' + esc(holat.ism) : '') +
+      '! Bugun — ' + holat.kun + '-kuningiz · bajarildi: ' + bajarildi + ' / ' + d.length + '</div><div style="height:14px"></div>';
+
+    if (bugungi) {
+      h += '<div class="card today"><div class="hint">' + (bugungi.turi === 'mock' ? 'Mock test' : 'Bugungi dars') + '</div>' +
+        '<h2 style="margin:4px 0">' + esc(bugungi.nomi_uz) + '</h2>' +
+        '<div class="hint" style="margin-bottom:12px">' + esc(bugungi.nomi_en) + '</div>' +
+        '<button class="btn" data-open="' + esc(bugungi.id) + '">' + (bugungi.turi === 'mock' ? 'Mock\'ni boşlaş' : 'Darsni boşlaş') + '</button></div>';
+    } else if (d.every(x => x.natija || !x.ochiq)) {
+      const ertaga = d.find(x => !x.ochiq);
+      h += '<div class="card"><h2>Bugungi reja bajarildi 🎉</h2><div class="hint">' +
+        (ertaga ? 'Ertaga: ' + esc(ertaga.nomi_uz) : 'Barça darslarni tugatdingiz!') + '</div></div>';
+    }
+
+    const haftalar = {};
+    d.forEach(x => { (haftalar[x.hafta] = haftalar[x.hafta] || []).push(x); });
+    Object.keys(haftalar).sort((a, b) => a - b).forEach(hf => {
+      const arr = haftalar[hf];
+      const bolim = (arr.find(x => x.turi !== 'mock') || {}).bolim || '';
+      h += '<h3>' + hf + '-hafta · ' + esc(bolim) + '</h3><div class="list">';
+      arr.forEach(x => {
+        let st, cls = 'row';
+        if (x.natija) st = '<span class="st ok">✓ ' + x.natija.togri + '/' + x.natija.jami + '</span>';
+        else if (!x.ochiq) { const q = x.tartib - holat.kun; st = '<span class="st">🔒 ' + q + ' kundan keyin</span>'; cls += ' locked'; }
+        else if (!x.bor) { st = '<span class="st">tayyorlanmoqda</span>'; cls += ' locked'; }
+        else st = '<span class="st" style="color:var(--link)">Boşlaş ›</span>';
+        h += '<div class="' + cls + '"' + (x.ochiq && x.bor ? ' data-open="' + esc(x.id) + '"' : '') + '>' +
+          '<div class="ic">' + (x.turi === 'mock' ? '📝' : '📘') + '</div>' +
+          '<div class="tx"><b>' + esc(x.nomi_uz) + '</b><span class="hint">' + esc(x.nomi_en) + '</span></div>' + st + '</div>';
+      });
+      h += '</div>';
+    });
+    h += '<p class="hint" style="text-align:center;margin-top:24px">Har kuni bitta yangi dars oçiladi.<br>Beta versiya — hamma narsa bepul.</p>';
+    show(h);
+    app.querySelectorAll('[data-open]').forEach(el => { el.onclick = () => openDars(el.getAttribute('data-open')); });
+  }
+
+  // ---------- DARS ----------
+
+  async function openDars(id) {
+    loading();
+    setBack(() => home());
+    let res;
+    try { res = await api('dars', { id: id }); }
+    catch (e) { return xato(e.message, () => openDars(id)); }
+    const dars = res.dars;
+    if (dars.natija) return natijaSahifa(dars, dars.natija);
+    if (dars.turi === 'mock') return mockIntro(dars);
+    nazariyaSahifa(dars);
+  }
+
+  function nazariyaSahifa(dars) {
+    setBack(() => home());
+    const n = dars.nazariya || {};
+    const L = til === 'en' ? 'en' : 'uz';
+    let h = '<span class="tag">' + esc(dars.bolim) + '</span><h1>' + esc(L === 'en' ? dars.nomi_en : dars.nomi_uz) + '</h1>' +
+      '<div class="hint">' + esc(L === 'en' ? dars.nomi_uz : dars.nomi_en) + '</div>' +
+      '<div class="seg"><button data-til="uz" class="' + (L === 'uz' ? 'on' : '') + '">Özbekça</button>' +
+      '<button data-til="en" class="' + (L === 'en' ? 'on' : '') + '">English</button></div>' +
+      '<div class="card theory">' + fmt(n[L] || n.uz || n.en) + '</div>';
+    if (n.formulalar && n.formulalar.length) {
+      h += '<h3>' + (L === 'en' ? 'Formulas' : 'Formulalar') + '</h3><div class="card">' +
+        n.formulalar.map(f => '<div class="formula">' + fmt(f) + '</div>').join('') + '</div>';
+    }
+    if (n.misollar && n.misollar.length) {
+      h += '<h3>' + (L === 'en' ? 'Examples' : 'Misollar') + '</h3><div class="card">' +
+        n.misollar.map((m, i) => '<div class="example"><b>' + (i + 1) + '.</b> ' + fmt(m[L] || m.uz || m.en) + '</div>').join('') + '</div>';
+    }
+    show(h, '<button class="btn" id="start">Testni boşlaş · ' + dars.savollar.length + ' ta savol</button>');
+    app.querySelectorAll('[data-til]').forEach(b => {
+      b.onclick = () => { til = b.getAttribute('data-til'); store.set('til', til); nazariyaSahifa(dars); };
+    });
+    document.getElementById('start').onclick = () => testBoshla(dars);
+  }
+
+  // ---------- TEST (kunlik va mock) ----------
+
+  function kalit(dars) { return 'sat_' + USER_ID + '_' + dars.id; }
+
+  function testBoshla(dars) {
+    const saqlangan = store.getJSON(kalit(dars));
+    const st = saqlangan || { javoblar: {}, boshlandi: Date.now(), modul: 0, modulBoshlandi: Date.now(), modulVaqt: [0, 0] };
+    st.i = st.i || 0;
+    store.setJSON(kalit(dars), st);
+    testEkran(dars, st);
+  }
+
+  function savollarRoyxati(dars, st) {
+    return dars.turi === 'mock' ? dars.modullar[st.modul] : dars.savollar;
+  }
+
+  function qolganVaqt(dars, st) {
+    return dars.daqiqa * 60 - (Date.now() - st.modulBoshlandi) / 1000;
+  }
+
+  function testEkran(dars, st) {
+    const savollar = savollarRoyxati(dars, st);
+    if (st.i >= savollar.length) st.i = savollar.length - 1;
+    const s = savollar[st.i];
+    const mock = dars.turi === 'mock';
+    setBack(async () => {
+      if (mock && !(await confirmBox('Mock\'dan çiqasizmi? Taymer töxtamaydi, javoblaringiz saqlanadi.'))) return;
+      home();
+    });
+
+    const j = st.javoblar[s.id] || '';
+    let h = '<div class="topbar"><span>' + (mock ? (st.modul + 1) + '-modul · ' : '') + (st.i + 1) + ' / ' + savollar.length + '</span>' +
+      '<span class="timer" id="timer"></span></div>' +
+      '<div class="card"><div class="q">' + fmt(s.matn) + '</div></div>';
+    if (s.turi === 'yozish') {
+      h += '<input class="ans" id="ans" inputmode="text" autocomplete="off" placeholder="Javobingiz" value="' + esc(j) + '">' +
+        '<div class="hint" style="margin:6px 4px">Son yozing: 7, -2, 3/4 yoki 0.75</div>';
+    } else {
+      ['A', 'B', 'C', 'D'].forEach(k => {
+        if (s.variantlar && s.variantlar[k] !== undefined && s.variantlar[k] !== '') {
+          h += '<button class="opt' + (j === k ? ' sel' : '') + '" data-k="' + k + '"><span class="l">' + k + '</span><span class="v">' + fmt(s.variantlar[k]) + '</span></button>';
+        }
+      });
+    }
+    h += '<div class="pal">' + savollar.map((q, i) =>
+      '<button data-go="' + i + '" class="' + (st.javoblar[q.id] ? 'done' : '') + (i === st.i ? ' cur' : '') + '">' + (i + 1) + '</button>').join('') + '</div>';
+
+    const oxirgi = st.i === savollar.length - 1;
+    const tugatishMatn = mock && st.modul === 0 ? '1-modulni yakunlaş' : 'Yakunlaş';
+    show(h, '<div class="btns"><button class="btn sec" id="prev"' + (st.i === 0 ? ' disabled' : '') + '>‹ Oldingi</button>' +
+      (oxirgi ? '<button class="btn" id="finish">' + tugatishMatn + '</button>' : '<button class="btn" id="next">Keyingi ›</button>') + '</div>');
+
+    const saqla = () => store.setJSON(kalit(dars), st);
+    const go = i => { st.i = i; saqla(); testEkran(dars, st); };
+
+    app.querySelectorAll('.opt').forEach(b => {
+      b.onclick = () => {
+        const k = b.getAttribute('data-k');
+        if (st.javoblar[s.id] === k) delete st.javoblar[s.id]; else st.javoblar[s.id] = k;
+        haptic();
+        saqla();
+        app.querySelectorAll('.opt').forEach(o => o.classList.toggle('sel', st.javoblar[s.id] === o.getAttribute('data-k')));
+        const p = app.querySelector('.pal [data-go="' + st.i + '"]');
+        if (p) p.classList.toggle('done', !!st.javoblar[s.id]);
+      };
+    });
+    const inp = document.getElementById('ans');
+    if (inp) {
+      inp.oninput = () => {
+        const v = inp.value.trim();
+        if (v) st.javoblar[s.id] = v; else delete st.javoblar[s.id];
+        saqla();
+        const p = app.querySelector('.pal [data-go="' + st.i + '"]');
+        if (p) p.classList.toggle('done', !!v);
+      };
+      inp.onkeydown = e => { if (e.key === 'Enter') inp.blur(); };
+    }
+    app.querySelectorAll('[data-go]').forEach(b => { b.onclick = () => go(Number(b.getAttribute('data-go'))); });
+    const prev = document.getElementById('prev');
+    if (prev) prev.onclick = () => go(st.i - 1);
+    const next = document.getElementById('next');
+    if (next) next.onclick = () => go(st.i + 1);
+    const fin = document.getElementById('finish');
+    if (fin) fin.onclick = () => yakunla(dars, st, false);
+
+    // taymer
+    const t = document.getElementById('timer');
+    const tick = () => {
+      if (mock) {
+        const q = qolganVaqt(dars, st);
+        t.textContent = '⏱ ' + vaqtStr(q);
+        t.classList.toggle('low', q < 300);
+        if (q <= 0) { stopTimer(); yakunla(dars, st, true); }
+      } else {
+        t.textContent = '⏱ ' + vaqtStr((Date.now() - st.boshlandi) / 1000);
+      }
+    };
+    tick();
+    timerId = setInterval(tick, 1000);
+  }
+
+  async function yakunla(dars, st, vaqtTugadi) {
+    const savollar = savollarRoyxati(dars, st);
+    const javobsiz = savollar.filter(q => !st.javoblar[q.id]).length;
+    if (!vaqtTugadi) {
+      const matn = javobsiz ? javobsiz + ' ta savolga javob bermadingiz. Baribir yakunlaysizmi?' : 'Yakunlaysizmi?';
+      if (!(await confirmBox(matn))) return;
+    }
+    if (dars.turi === 'mock' && st.modul === 0) {
+      st.modulVaqt[0] = Math.min(dars.daqiqa * 60, (Date.now() - st.modulBoshlandi) / 1000);
+      st.modul = 1;
+      st.i = 0;
+      st.tanaffus = true;
+      store.setJSON(kalit(dars), st);
+      haptic('success');
+      return modulOraliq(dars, st, vaqtTugadi);
+    }
+    if (dars.turi === 'mock') st.modulVaqt[1] = Math.min(dars.daqiqa * 60, (Date.now() - st.modulBoshlandi) / 1000);
+    const vaqt = dars.turi === 'mock' ? st.modulVaqt[0] + st.modulVaqt[1] : (Date.now() - st.boshlandi) / 1000;
+    yubor(dars, st, vaqt);
+  }
+
+  async function yubor(dars, st, vaqt) {
+    setBack(null);
+    loading('Natija hisoblanmoqda…');
+    try {
+      const res = await api('topshir', { id: dars.id, javoblar: st.javoblar, vaqt: vaqt });
+      store.remove(kalit(dars));
+      haptic('success');
+      if (holat) {
+        const x = holat.darslar.find(d => d.id === dars.id);
+        if (x) x.natija = { togri: res.natija.togri, jami: res.natija.jami };
+      }
+      natijaSahifa(dars, res.natija);
+    } catch (e) {
+      xato(e.message === 'Failed to fetch' ? 'Internet yöq. Javoblaringiz saqlangan — qayta yuboring.' : e.message, () => yubor(dars, st, vaqt));
+    }
+  }
+
+  // ---------- MOCK ----------
+
+  function mockIntro(dars) {
+    setBack(() => home());
+    const st = store.getJSON(kalit(dars));
+    if (st) {
+      if (st.tanaffus) return modulOraliq(dars, st, false);
+      if (qolganVaqt(dars, st) <= 0) return yakunla(dars, st, true);
+      return testEkran(dars, st);
+    }
+    const n = dars.modullar[0].length + dars.modullar[1].length;
+    show('<span class="tag">Mock test</span><h1>' + esc(dars.nomi_uz) + '</h1>' +
+      '<div class="card"><p style="margin-top:0"><b>' + n + ' ta savol</b>, 2 ta modul:</p>' +
+      '<p>1-modul — ' + dars.modullar[0].length + ' ta savol, ' + dars.daqiqa + ' daqiqa<br>2-modul — ' + dars.modullar[1].length + ' ta savol, ' + dars.daqiqa + ' daqiqa</p>' +
+      '<p class="hint" style="margin-bottom:0">Haqiqiy SAT kabi: modul boşlangaç taymer töxtamaydi. Kalkulyator (Desmos) işlatiş mumkin. ' +
+      'Vaqt tugasa modul özi yakunlanadi. Oldin osonroq, keyin qiyinroq savollar keladi.</p></div>',
+      '<button class="btn" id="go">1-modulni boşlaş</button>');
+    document.getElementById('go').onclick = () => {
+      const s = { javoblar: {}, boshlandi: Date.now(), modul: 0, modulBoshlandi: Date.now(), modulVaqt: [0, 0], i: 0 };
+      store.setJSON(kalit(dars), s);
+      testEkran(dars, s);
+    };
+  }
+
+  function modulOraliq(dars, st, vaqtTugadi) {
+    setBack(() => home());
+    show('<div class="card score"><div style="font-size:44px">☕</div><h2>1-modul tugadi</h2><p class="hint">' +
+      (vaqtTugadi ? 'Vaqt tugadi, javoblaringiz saqlandi. ' : '') +
+      'Tayyor bölganingizda 2-modulni boşlang — ' + dars.modullar[1].length + ' ta savol, ' + dars.daqiqa + ' daqiqa.</p></div>',
+      '<button class="btn" id="go">2-modulni boşlaş</button>');
+    document.getElementById('go').onclick = () => {
+      st.tanaffus = false;
+      st.modulBoshlandi = Date.now();
+      st.i = 0;
+      store.setJSON(kalit(dars), st);
+      testEkran(dars, st);
+    };
+  }
+
+  // ---------- NATIJA ----------
+
+  function natijaSahifa(dars, nat) {
+    setBack(() => home());
+    const foiz = nat.jami ? Math.round(nat.togri / nat.jami * 100) : 0;
+    const emoji = foiz >= 80 ? '🏆' : foiz >= 60 ? '👍' : foiz >= 40 ? '💪' : '📚';
+    let h = '<div class="card score"><div style="font-size:40px">' + emoji + '</div>' +
+      '<div class="big">' + nat.togri + ' / ' + nat.jami + '</div>' +
+      '<div class="hint">' + foiz + '% töğri' + (nat.vaqt ? ' · ' + vaqtStr(nat.vaqt) : '') + '</div>' +
+      '<h2 style="margin-top:12px">' + esc(dars.nomi_uz) + '</h2></div>';
+
+    const bloklar = dars.turi === 'mock'
+      ? dars.modullar.map((m, i) => ({ nom: (i + 1) + '-modul', savollar: m }))
+      : [{ nom: 'Savollar', savollar: dars.savollar }];
+    let raqam = 0;
+    bloklar.forEach(b => {
+      const tg = b.savollar.filter(s => nat.savollar[s.id] && nat.savollar[s.id].togri).length;
+      h += '<h3>' + b.nom + ' · ' + tg + ' / ' + b.savollar.length + '</h3><div class="list">';
+      b.savollar.forEach(s => {
+        raqam++;
+        const r = nat.savollar[s.id] || {};
+        h += '<div class="res" data-s="' + esc(s.id) + '"><div class="n ' + (r.togri ? 'ok' : 'no') + '">' + raqam + '</div>' +
+          '<div style="flex:1;font-size:14px">' + (r.togri ? 'Töğri' : (r.javob ? 'Xato' : 'Javob berilmagan')) +
+          '<div class="hint">Sizning javobingiz: <b>' + esc(r.javob || '—') + '</b>' +
+          (r.togri ? '' : ' · Töğri javob: <b>' + esc(r.togri_javob) + '</b>') + '</div></div><div class="hint">›</div></div>' +
+          '<div class="detail" id="d_' + esc(s.id) + '" style="display:none"></div>';
+      });
+      h += '</div>';
+    });
+    show(h, '<button class="btn" id="home">Boş sahifa</button>');
+    document.getElementById('home').onclick = () => home();
+    app.querySelectorAll('[data-s]').forEach(el => {
+      el.onclick = () => {
+        const id = el.getAttribute('data-s');
+        const box = document.getElementById('d_' + id);
+        if (box.style.display !== 'none') { box.style.display = 'none'; return; }
+        const s = bloklar.reduce((a, b) => a.concat(b.savollar), []).find(q => q.id === id);
+        const r = nat.savollar[id] || {};
+        let d = '<div class="q" style="margin:8px 0">' + fmt(s.matn) + '</div>';
+        if (s.variantlar) {
+          ['A', 'B', 'C', 'D'].forEach(k => {
+            if (s.variantlar[k] === undefined || s.variantlar[k] === '') return;
+            const cls = k === r.togri_javob ? ' right' : (k === r.javob ? ' wrong' : '');
+            d += '<div class="opt' + cls + '" style="cursor:default"><span class="l">' + k + '</span><span class="v">' + fmt(s.variantlar[k]) + '</span></div>';
+          });
+        }
+        box.innerHTML = d;
+        renderMath(box);
+        box.style.display = '';
+      };
+    });
+  }
+
+  // ---------- ISHGA TUSHIRISH ----------
+
+  function start() {
+    if (!API) return xato('Mini App manzili notöğri. Botdagi tugma orqali oçing.');
+    if (!initData) return xato('Bu sahifani Telegram bot orqali oçing.');
+    home(true);
+  }
+  // KaTeX yuklanişini biroz kutamiz
+  if (document.readyState === 'complete') start(); else window.addEventListener('load', start);
+})();
+</script>
+</body>
+</html>
