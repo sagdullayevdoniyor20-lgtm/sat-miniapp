@@ -94,6 +94,22 @@
   @keyframes s { to { transform: rotate(360deg); } }
   .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--bg2); color: var(--hint); margin-bottom: 6px; }
   .katex-display { overflow-x: auto; overflow-y: hidden; }
+  /* Mavzu: kunduzgi va tungi rejim (Avto bölsa Telegram ranglari işlatiladi) */
+  html.light {
+    --bg: #ffffff; --bg2: #f2f3f7; --text: #111827; --hint: #8a8f98; --link: #2b7de9;
+    --btn: #2b7de9; --btn-text: #ffffff; --card: #ffffff; --border: rgba(0, 0, 0, .1);
+  }
+  html.dark {
+    --bg: #17212b; --bg2: #0e1621; --text: #eef1f4; --hint: #7f8b98; --link: #6ab3f3;
+    --btn: #3a86d6; --btn-text: #ffffff; --card: #182533; --border: rgba(255, 255, 255, .1);
+    --green: #4cc38a; --green-bg: rgba(76, 195, 138, .16); --red: #ff6b6b; --red-bg: rgba(255, 107, 107, .16);
+    color-scheme: dark;
+  }
+  html.light, html.dark { background: var(--bg2); }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .theme-btn { flex: none; border: 0; background: var(--card); color: var(--text); border-radius: 12px;
+    padding: 8px 12px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+  body { transition: background-color .2s, color .2s; }
 </style>
 </head>
 <body>
@@ -125,15 +141,56 @@
 
   let holat = null;      // darslar röyxati
   let til = store.get('til') || 'uz';
+
+  // ---------- MAVZU (tungi / kunduzgi rejim) ----------
+  const MAVZULAR = ['avto', 'tungi', 'kunduzgi'];
+  const MAVZU_NOM = { avto: '🌓 Avto', tungi: '🌙 Tungi', kunduzgi: '☀️ Kunduzgi' };
+  let mavzu = store.get('mavzu') || 'avto';
+  function tgQorongimi() {
+    if (TG && TG.themeParams && TG.themeParams.bg_color) return TG.colorScheme === 'dark';
+    return null; // Telegram ranglari yöq
+  }
+  function mavzuniQoy() {
+    const html = document.documentElement;
+    let rejim = mavzu === 'tungi' ? 'dark' : mavzu === 'kunduzgi' ? 'light' : null;
+    if (!rejim && tgQorongimi() === null) {
+      rejim = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    html.classList.toggle('dark', rejim === 'dark');
+    html.classList.toggle('light', rejim === 'light');
+    if (TG) {
+      try {
+        if (rejim) {
+          const rang = rejim === 'dark' ? '#0e1621' : '#f2f3f7';
+          TG.setHeaderColor(rang);
+          TG.setBackgroundColor(rang);
+          if (TG.setBottomBarColor) TG.setBottomBarColor(rejim === 'dark' ? '#17212b' : '#ffffff');
+        } else {
+          TG.setHeaderColor('secondary_bg_color');
+          TG.setBackgroundColor('secondary_bg_color');
+          if (TG.setBottomBarColor) TG.setBottomBarColor('bg_color');
+        }
+      } catch (e) {}
+    }
+  }
+  function mavzuniAlmashtir() {
+    mavzu = MAVZULAR[(MAVZULAR.indexOf(mavzu) + 1) % MAVZULAR.length];
+    store.set('mavzu', mavzu);
+    mavzuniQoy();
+    haptic();
+    const b = document.getElementById('themeBtn');
+    if (b) b.textContent = MAVZU_NOM[mavzu];
+  }
   let timerId = null;
   let backHandler = null;
 
   if (TG) {
     TG.ready();
     TG.expand();
-    try { TG.setHeaderColor('secondary_bg_color'); } catch (e) {}
+    TG.onEvent && TG.onEvent('themeChanged', () => { if (mavzu === 'avto') mavzuniQoy(); });
     TG.BackButton.onClick(() => { if (backHandler) backHandler(); });
   }
+  mavzuniQoy();
 
   // ---------- yordamçi funksiyalar ----------
 
@@ -219,8 +276,9 @@
     const bugungi = d.find(x => x.ochiq && x.bor && !x.natija);
     const bajarildi = d.filter(x => x.natija).length;
 
-    let h = '<h1>SAT Math</h1><div class="hint">Salom' + (holat.ism ? ', ' + esc(holat.ism) : '') +
-      '! Bugun — ' + holat.kun + '-kuningiz · bajarildi: ' + bajarildi + ' / ' + d.length + '</div><div style="height:14px"></div>';
+    let h = '<div class="head"><div><h1>SAT Math</h1>' + '<div class="hint">Salom' + (holat.ism ? ', ' + esc(holat.ism) : '') +
+      '! Bugun — ' + holat.kun + '-kuningiz · bajarildi: ' + bajarildi + ' / ' + d.length + '</div></div>' +
+      '<button class="theme-btn" id="themeBtn">' + MAVZU_NOM[mavzu] + '</button></div><div style="height:14px"></div>';
 
     if (bugungi) {
       h += '<div class="card today"><div class="hint">' + (bugungi.turi === 'mock' ? 'Mock test' : 'Bugungi dars') + '</div>' +
@@ -254,6 +312,7 @@
     h += '<p class="hint" style="text-align:center;margin-top:24px">Har kuni bitta yangi dars oçiladi.<br>Beta versiya — hamma narsa bepul.</p>';
     show(h);
     app.querySelectorAll('[data-open]').forEach(el => { el.onclick = () => openDars(el.getAttribute('data-open')); });
+    document.getElementById('themeBtn').onclick = mavzuniAlmashtir;
   }
 
   // ---------- DARS ----------
